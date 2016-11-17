@@ -10,7 +10,7 @@ class Api::V1::CommentsController < ApplicationController
   end
 
   def comment_params
-    params.permit(:author, :text)
+    params.permit(:tape_id, :author, :text, :posted_time)
   end
 
 end
