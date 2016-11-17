@@ -2,7 +2,7 @@ h1
   | Notes#write
 p
   | Find me in app/views/notes/write.html.slim
-= react_component('CommentBox')
+= react_component('CommentBox', url: '/api/v1/comments.json', pollInterval: 2000)
 
 
 
