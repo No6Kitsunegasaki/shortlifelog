@@ -1,7 +1,7 @@
 class Api::V1::CommentsController < ApplicationController
 
   def index
-    @data = Comment.all
+    @data = Comment.all.order("posted_time")
   end
 
   def create

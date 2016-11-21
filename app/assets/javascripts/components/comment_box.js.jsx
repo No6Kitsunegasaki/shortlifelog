@@ -19,6 +19,8 @@ var CommentBox = React.createClass({
   },
   handleCommentSubmit: function(comment) {
     comment['tape_id'] = this.state.selectedTape;
+    var now = new Date();
+    comment['posted_time'] = now.getTime() - this.state.startRec;
     $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -34,10 +36,52 @@ var CommentBox = React.createClass({
       }.bind(this)
     });
   },
+  play: function() {
+    var now = new Date();
+    var playerTime = now.getTime() - this.state.startPlay;
+    this.setState({
+      playerTime: playerTime
+    });
+  },
+  handlePlayerSubmit: function() {
+    if(this.state.playerButtonName === 'play') {
+      var timer = setInterval(this.play, 100);
+      var now = new Date();
+      this.setState({
+        startPlay: now.getTime(),
+        playerButtonName: 'stop',
+        playerTimer: timer
+      }); 
+    } else {
+      clearInterval(this.state.playerTimer);
+      this.setState({
+        playerButtonName: 'play',
+        playerTimer: undefined
+      }); 
+    }
+    return;
+  },
+  handleRecoderSubmit: function() {
+    if(this.state.recoderButtonName === 'rec') {
+      var now = new Date();
+      this.setState({
+        startRec: now.getTime(),
+        recoderButtonName: 'stop'
+      }); 
+    } else {
+      this.setState({
+        recoderButtonName: 'rec'
+      }); 
+    }
+    return;
+  },
   getInitialState: function() {
     return {
       data: [],
-      selectedTape: '1'
+      playerTime: 0,
+      playerButtonName: 'play',
+      recoderButtonName: 'rec',
+      selectedTape: '1',
     };
   },
   componentDidMount: function() {
@@ -48,8 +92,11 @@ var CommentBox = React.createClass({
     return (
       <div className="commentBox">
         <h2>comment</h2>
+        <PlayerForm buttonName={this.state.playerButtonName} onPlayerSubmit={this.handlePlayerSubmit} />
+        <PlayerTimer time={this.state.playerTime} />
         <CommentList data={this.state.data} />
         <TapeForm selectedTape={this.state.selectedTape} onTapeChange={this.handleTapeChange} />
+        <RecoderForm buttonName={this.state.recoderButtonName} onRecoderSubmit={this.handleRecoderSubmit} />
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
       </div>
     );
@@ -70,6 +117,51 @@ var CommentList = React.createClass({
       <div className="commentList">
         {commentNodes}
       </div>
+    );
+  }
+});
+
+var PlayerTimer = React.createClass({
+  render: function() {
+    var time = this.props.time / 1000;
+    return (
+      <div className="playerTimer">
+        {time}sec
+      </div>
+    );
+  }
+});
+
+var PlayerForm = React.createClass({
+
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.onPlayerSubmit();
+    return false;
+  },
+  render : function() {
+    return (
+      <form className="playerForm" onSubmit={this.handleSubmit}>
+        <input type="submit" value={this.props.buttonName} />
+      </form>
+    );
+  }
+});
+
+
+
+var RecoderForm = React.createClass({
+
+  handleSubmit(e) {
+    e.preventDefault();
+    this.props.onRecoderSubmit();
+    return false;
+  },
+  render : function() {
+    return (
+      <form className="recoderForm" onSubmit={this.handleSubmit}>
+        <input type="submit" value={this.props.buttonName} />
+      </form>
     );
   }
 });
@@ -136,6 +228,7 @@ var Comment = React.createClass({
     return (
       <div className="comment">
         <span className="tape"> {this.props.tape_id} </span>
+        <span className="postedTime"> {this.props.posted_time} </span>
         <span className="author"> {this.props.author} </span>
         <span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
       </div>
