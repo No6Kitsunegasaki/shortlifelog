@@ -12,8 +12,13 @@ var CommentBox = React.createClass({
       }.bind(this)
     });
   },
+  handleTapeChange: function(e) {
+    this.setState({
+      selectedTape: e.target.value
+    });
+  },
   handleCommentSubmit: function(comment) {
-    console.log(comment);
+    comment['tape_id'] = this.state.selectedTape;
     $.ajax({
       url: this.props.url,
       dataType: 'json',
@@ -30,17 +35,21 @@ var CommentBox = React.createClass({
     });
   },
   getInitialState: function() {
-    return {data: []};
+    return {
+      data: [],
+      selectedTape: '1'
+    };
   },
   componentDidMount: function() {
     this.loadCommentsFromServer();
-    setInterval(this.loadCommentsFromServer, this.props.pollInterval);
+    //setInterval(this.loadCommentsFromServer, this.props.pollInterval);
   },
   render: function() {
     return (
       <div className="commentBox">
         <h2>comment</h2>
         <CommentList data={this.state.data} />
+        <TapeForm selectedTape={this.state.selectedTape} onTapeChange={this.handleTapeChange} />
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
       </div>
     );
@@ -52,8 +61,7 @@ var CommentList = React.createClass({
   render: function() {
     var commentNodes = this.props.data.map(function (comment) {
       return (
-        <Comment key={comment.id}>
-          {comment.author}
+        <Comment key={comment.id} tape_id={comment.tape_id} author={comment.author}>
           {comment.text}
         </Comment>
       );
@@ -66,17 +74,40 @@ var CommentList = React.createClass({
   }
 });
 
+var TapeForm = React.createClass({
+
+  render: function() {
+    return (
+      <form>
+        <ul>
+          <li>
+            <label>
+              <input type="radio" value="1" checked={this.props.selectedTape === '1'} onChange={this.props.onTapeChange} />
+              tape_1
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="radio" value="2" checked={this.props.selectedTape === '2'} onChange={this.props.onTapeChange} />
+              tape_2
+            </label>
+          </li>
+        </ul>
+      </form>
+    );
+  }
+});
+
 var CommentForm = React.createClass({
 
   handleSubmit: function(e) {
     e.preventDefault();
-    var tape_id = this.refs.tape_id.value;
     var author = this.refs.author.value.trim();
     var text = this.refs.text.value.trim();
     if (!text || !author) {
       return;
     }
-    this.props.onCommentSubmit({tape_id: tape_id, author: author, text: text});
+    this.props.onCommentSubmit({author: author, text: text});
     //this.refs.author.value = ''; // いちいちクリアしない
     this.refs.text.value = '';
     return;
@@ -84,9 +115,14 @@ var CommentForm = React.createClass({
   render: function() {
     return (
       <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input type="radio" value="1" ref="tape_id" />
-        <input type="text" placeholder="Your name" ref="author" />
-        <input type="text" placeholder="Say something..." ref="text" />
+        <ul>
+          <li>
+            <input type="text" placeholder="Your name" ref="author" />
+          </li>
+          <li>
+            <input type="text" placeholder="Say something..." ref="text" />
+          </li>
+        </ul>
         <input type="submit" value="Post" />
       </form>
     );
@@ -99,10 +135,9 @@ var Comment = React.createClass({
     var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
     return (
       <div className="comment">
-        <div className="author">
-          {this.props.author}
-        </div>
-        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+        <span className="tape"> {this.props.tape_id} </span>
+        <span className="author"> {this.props.author} </span>
+        <span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
       </div>
     );
   }
