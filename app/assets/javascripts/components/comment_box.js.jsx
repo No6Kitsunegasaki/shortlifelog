@@ -5,7 +5,7 @@ var CommentBox = React.createClass({
       url: this.props.url,
       dataType: 'json',
       success: function(result) {
-        this.setState({data: result.data});
+        this.setState({originComments: result.data});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -27,28 +27,30 @@ var CommentBox = React.createClass({
       type: 'POST',
       data: comment,
       success: function(data) {
-        console.log('success');
-        console.log(data);
-        this.setState({data: this.state.data.concat([data])});
+        this.setState({originComments: this.state.originComments.concat([data])});
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
   },
-  play: function() {
-    var now = new Date();
-    var playerTime = now.getTime() - this.state.startPlay;
+  updateCommentList: function(time) {
     this.setState({
-      playerTime: playerTime
+      playerTime: time,
+      viewComments: this.state.originComments.filter(function(v) { return (v.posted_time < time) })
     });
+  },
+  play: function() {
+    var playerTime = this.state.playerTime + this.state.playerInterval;
+    this.updateCommentList(playerTime);
+  },
+  handlePlayerReset: function() {
+    this.updateCommentList(0);
   },
   handlePlayerSubmit: function() {
     if(this.state.playerButtonName === 'play') {
-      var timer = setInterval(this.play, 100);
-      var now = new Date();
+      var timer = setInterval(this.play, this.state.playerInterval);
       this.setState({
-        startPlay: now.getTime(),
         playerButtonName: 'stop',
         playerTimer: timer
       }); 
@@ -77,8 +79,10 @@ var CommentBox = React.createClass({
   },
   getInitialState: function() {
     return {
-      data: [],
+      originComments: [],
+      viewComments: [],
       playerTime: 0,
+      playerInterval: 10,
       playerButtonName: 'play',
       recoderButtonName: 'rec',
       selectedTape: '1',
@@ -92,9 +96,9 @@ var CommentBox = React.createClass({
     return (
       <div className="commentBox">
         <h2>comment</h2>
-        <PlayerForm buttonName={this.state.playerButtonName} onPlayerSubmit={this.handlePlayerSubmit} />
+        <PlayerForm buttonName={this.state.playerButtonName} onPlayerSubmit={this.handlePlayerSubmit} onPlayerReset={this.handlePlayerReset}/>
         <PlayerTimer time={this.state.playerTime} />
-        <CommentList data={this.state.data} />
+        <CommentList data={this.state.viewComments} />
         <TapeForm selectedTape={this.state.selectedTape} onTapeChange={this.handleTapeChange} />
         <RecoderForm buttonName={this.state.recoderButtonName} onRecoderSubmit={this.handleRecoderSubmit} />
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
@@ -107,8 +111,9 @@ var CommentList = React.createClass({
 
   render: function() {
     var commentNodes = this.props.data.map(function (comment) {
+      var posted_time = comment.posted_time / 1000;
       return (
-        <Comment key={comment.id} tape_id={comment.tape_id} author={comment.author}>
+        <Comment key={comment.id} tape_id={comment.tape_id} author={comment.author} posted_time={posted_time} text={comment.text}>
           {comment.text}
         </Comment>
       );
@@ -139,10 +144,16 @@ var PlayerForm = React.createClass({
     this.props.onPlayerSubmit();
     return false;
   },
+  handleReset(e) {
+    e.preventDefault();
+    this.props.onPlayerReset();
+    return false;
+  },
   render : function() {
     return (
       <form className="playerForm" onSubmit={this.handleSubmit}>
         <input type="submit" value={this.props.buttonName} />
+        <input type="button" value="reset" onClick={this.handleReset} />
       </form>
     );
   }
@@ -224,13 +235,17 @@ var CommentForm = React.createClass({
 var Comment = React.createClass({
 
   render: function() {
-    var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+    //var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+        //<span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
     return (
       <div className="comment">
-        <span className="tape"> {this.props.tape_id} </span>
-        <span className="postedTime"> {this.props.posted_time} </span>
-        <span className="author"> {this.props.author} </span>
-        <span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
+        <div className="info">
+          tape: <span className="tape">{this.props.tape_id}</span>
+          posted_time: <span className="postedTime">{this.props.posted_time}</span>sec
+        </div>
+        <div className="main">
+          <span className="author">{this.props.author}</span>:<span className="text">{this.props.text}</span>
+        </div>
       </div>
     );
   }

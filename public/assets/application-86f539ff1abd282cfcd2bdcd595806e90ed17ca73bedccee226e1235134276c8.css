@@ -1,3 +1,14 @@
+/* line 4, /home/noroku/text_recoder/app/assets/stylesheets/notes.scss */
+.comment {
+  border-style: solid;
+  border-width: 1px;
+  margin-bottom: 4px;
+}
+/* line 8, /home/noroku/text_recoder/app/assets/stylesheets/notes.scss */
+.comment .info {
+  margin-bottom: 2px;
+  font-size: 9pt;
+}
 /*
  * This is a manifest file that'll be compiled into application.css, which will include all the files
  * listed below.

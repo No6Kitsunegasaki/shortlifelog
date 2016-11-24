@@ -33239,7 +33239,7 @@ var CommentBox = React.createClass({
       url: this.props.url,
       dataType: 'json',
       success: (function (result) {
-        this.setState({ data: result.data });
+        this.setState({ originComments: result.data });
       }).bind(this),
       error: (function (xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -33253,24 +33253,74 @@ var CommentBox = React.createClass({
   },
   handleCommentSubmit: function (comment) {
     comment['tape_id'] = this.state.selectedTape;
+    var now = new Date();
+    comment['posted_time'] = now.getTime() - this.state.startRec;
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       type: 'POST',
       data: comment,
       success: (function (data) {
-        console.log('success');
-        console.log(data);
-        this.setState({ data: this.state.data.concat([data]) });
+        this.setState({ originComments: this.state.originComments.concat([data]) });
       }).bind(this),
       error: (function (xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }).bind(this)
     });
   },
+  updateCommentList: function (time) {
+    this.setState({
+      playerTime: time,
+      viewComments: this.state.originComments.filter(function (v) {
+        return v.posted_time < time;
+      })
+    });
+  },
+  play: function () {
+    var playerTime = this.state.playerTime + this.state.playerInterval;
+    this.updateCommentList(playerTime);
+  },
+  handlePlayerReset: function () {
+    this.updateCommentList(0);
+  },
+  handlePlayerSubmit: function () {
+    if (this.state.playerButtonName === 'play') {
+      var timer = setInterval(this.play, this.state.playerInterval);
+      this.setState({
+        playerButtonName: 'stop',
+        playerTimer: timer
+      });
+    } else {
+      clearInterval(this.state.playerTimer);
+      this.setState({
+        playerButtonName: 'play',
+        playerTimer: undefined
+      });
+    }
+    return;
+  },
+  handleRecoderSubmit: function () {
+    if (this.state.recoderButtonName === 'rec') {
+      var now = new Date();
+      this.setState({
+        startRec: now.getTime(),
+        recoderButtonName: 'stop'
+      });
+    } else {
+      this.setState({
+        recoderButtonName: 'rec'
+      });
+    }
+    return;
+  },
   getInitialState: function () {
     return {
-      data: [],
+      originComments: [],
+      viewComments: [],
+      playerTime: 0,
+      playerInterval: 10,
+      playerButtonName: 'play',
+      recoderButtonName: 'rec',
       selectedTape: '1'
     };
   },
@@ -33287,8 +33337,11 @@ var CommentBox = React.createClass({
         null,
         'comment'
       ),
-      React.createElement(CommentList, { data: this.state.data }),
+      React.createElement(PlayerForm, { buttonName: this.state.playerButtonName, onPlayerSubmit: this.handlePlayerSubmit, onPlayerReset: this.handlePlayerReset }),
+      React.createElement(PlayerTimer, { time: this.state.playerTime }),
+      React.createElement(CommentList, { data: this.state.viewComments }),
       React.createElement(TapeForm, { selectedTape: this.state.selectedTape, onTapeChange: this.handleTapeChange }),
+      React.createElement(RecoderForm, { buttonName: this.state.recoderButtonName, onRecoderSubmit: this.handleRecoderSubmit }),
       React.createElement(CommentForm, { onCommentSubmit: this.handleCommentSubmit })
     );
   }
@@ -33299,9 +33352,10 @@ var CommentList = React.createClass({
 
   render: function () {
     var commentNodes = this.props.data.map(function (comment) {
+      var posted_time = comment.posted_time / 1000;
       return React.createElement(
         Comment,
-        { key: comment.id, tape_id: comment.tape_id, author: comment.author },
+        { key: comment.id, tape_id: comment.tape_id, author: comment.author, posted_time: posted_time, text: comment.text },
         comment.text
       );
     });
@@ -33309,6 +33363,60 @@ var CommentList = React.createClass({
       'div',
       { className: 'commentList' },
       commentNodes
+    );
+  }
+});
+
+var PlayerTimer = React.createClass({
+  displayName: 'PlayerTimer',
+
+  render: function () {
+    var time = this.props.time / 1000;
+    return React.createElement(
+      'div',
+      { className: 'playerTimer' },
+      time,
+      'sec'
+    );
+  }
+});
+
+var PlayerForm = React.createClass({
+  displayName: 'PlayerForm',
+
+  handleSubmit: function (e) {
+    e.preventDefault();
+    this.props.onPlayerSubmit();
+    return false;
+  },
+  handleReset: function (e) {
+    e.preventDefault();
+    this.props.onPlayerReset();
+    return false;
+  },
+  render: function () {
+    return React.createElement(
+      'form',
+      { className: 'playerForm', onSubmit: this.handleSubmit },
+      React.createElement('input', { type: 'submit', value: this.props.buttonName }),
+      React.createElement('input', { type: 'button', value: 'reset', onClick: this.handleReset })
+    );
+  }
+});
+
+var RecoderForm = React.createClass({
+  displayName: 'RecoderForm',
+
+  handleSubmit: function (e) {
+    e.preventDefault();
+    this.props.onRecoderSubmit();
+    return false;
+  },
+  render: function () {
+    return React.createElement(
+      'form',
+      { className: 'recoderForm', onSubmit: this.handleSubmit },
+      React.createElement('input', { type: 'submit', value: this.props.buttonName })
     );
   }
 });
@@ -33390,25 +33498,43 @@ var Comment = React.createClass({
   displayName: 'Comment',
 
   render: function () {
-    var rawMarkup = marked(this.props.children.toString(), { sanitize: true });
+    //var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+    //<span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
     return React.createElement(
       'div',
       { className: 'comment' },
       React.createElement(
-        'span',
-        { className: 'tape' },
-        ' ',
-        this.props.tape_id,
-        ' '
+        'div',
+        { className: 'info' },
+        'tape: ',
+        React.createElement(
+          'span',
+          { className: 'tape' },
+          this.props.tape_id
+        ),
+        'posted_time: ',
+        React.createElement(
+          'span',
+          { className: 'postedTime' },
+          this.props.posted_time
+        ),
+        'sec'
       ),
       React.createElement(
-        'span',
-        { className: 'author' },
-        ' ',
-        this.props.author,
-        ' '
-      ),
-      React.createElement('span', { className: 'text', dangerouslySetInnerHTML: { __html: rawMarkup } })
+        'div',
+        { className: 'main' },
+        React.createElement(
+          'span',
+          { className: 'author' },
+          this.props.author
+        ),
+        ':',
+        React.createElement(
+          'span',
+          { className: 'text' },
+          this.props.text
+        )
+      )
     );
   }
 });
