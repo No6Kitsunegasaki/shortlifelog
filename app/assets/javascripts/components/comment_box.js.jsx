@@ -119,7 +119,7 @@ var CommentList = React.createClass({
       );
     });
     return (
-      <div className="commentList">
+      <div className="commentList commentListLineStyle">
         {commentNodes}
       </div>
     );
@@ -238,13 +238,15 @@ var Comment = React.createClass({
     //var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
         //<span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
     return (
-      <div className="comment">
-        <div className="info">
-          tape: <span className="tape">{this.props.tape_id}</span>
-          posted_time: <span className="postedTime">{this.props.posted_time}</span>sec
-        </div>
-        <div className="main">
-          <span className="author">{this.props.author}</span>:<span className="text">{this.props.text}</span>
+      <div className="comment commentLineStyle">
+        <div className="inner">
+          <div className="info">
+            tape: <span className="tape">{this.props.tape_id}</span>
+            posted_time: <span className="postedTime">{this.props.posted_time}</span>sec
+          </div>
+          <div className="main">
+            <span className="author">{this.props.author}</span>:<span className="text">{this.props.text}</span>
+          </div>
         </div>
       </div>
     );
