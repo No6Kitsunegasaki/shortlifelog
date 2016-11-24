@@ -12,6 +12,11 @@ var CommentBox = React.createClass({
       }.bind(this)
     });
   },
+  handleStyleChange: function(e) {
+    this.setState({
+      commentStyle: e.target.value
+    });
+  },
   handleTapeChange: function(e) {
     this.setState({
       selectedTape: e.target.value
@@ -81,6 +86,8 @@ var CommentBox = React.createClass({
     return {
       originComments: [],
       viewComments: [],
+      styles: [{name: 'line'}],
+      commentStyle: 'line',
       playerTime: 0,
       playerInterval: 10,
       playerButtonName: 'play',
@@ -96,9 +103,10 @@ var CommentBox = React.createClass({
     return (
       <div className="commentBox">
         <h2>comment</h2>
-        <PlayerForm buttonName={this.state.playerButtonName} onPlayerSubmit={this.handlePlayerSubmit} onPlayerReset={this.handlePlayerReset}/>
+        <StyleForm selectedStyle={this.state.commentStyle} onStyleChange={this.handleStyleChange} />
+        <PlayerForm buttonName={this.state.playerButtonName} onPlayerSubmit={this.handlePlayerSubmit} onPlayerReset={this.handlePlayerReset} />
         <PlayerTimer time={this.state.playerTime} />
-        <CommentList data={this.state.viewComments} />
+        <CommentList data={this.state.viewComments} style={this.state.commentStyle} />
         <TapeForm selectedTape={this.state.selectedTape} onTapeChange={this.handleTapeChange} />
         <RecoderForm buttonName={this.state.recoderButtonName} onRecoderSubmit={this.handleRecoderSubmit} />
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
@@ -110,16 +118,22 @@ var CommentBox = React.createClass({
 var CommentList = React.createClass({
 
   render: function() {
+    var styles = {
+      line: 'commentListLineStyle',
+      twitter: 'commentListTwitterStyle'
+    };
+    var mainClassName = "commentList " + styles[this.props.style];
+    
     var commentNodes = this.props.data.map(function (comment) {
       var posted_time = comment.posted_time / 1000;
       return (
-        <Comment key={comment.id} tape_id={comment.tape_id} author={comment.author} posted_time={posted_time} text={comment.text}>
+        <Comment key={comment.id} tape_id={comment.tape_id} author={comment.author} posted_time={posted_time} text={comment.text} sytle={this.props.style}>
           {comment.text}
         </Comment>
       );
-    });
+    }, this);
     return (
-      <div className="commentList commentListLineStyle">
+      <div className={mainClassName}>
         {commentNodes}
       </div>
     );
@@ -159,7 +173,20 @@ var PlayerForm = React.createClass({
   }
 });
 
+var StyleForm = React.createClass({
 
+  handleChange(e) {
+    this.props.onStyleChange(e);
+  },
+  render : function() {
+    return (
+      <form className="styleForm">
+        <input type="radio" name="style" checked={this.props.selectedStyle === "line"} onChange={this.handleChange} value="line" /><span>line</span>
+        <input type="radio" name="style" checked={this.props.selectedStyle === "twitter"} onChange={this.handleChange} value="twitter" /><span>twitter</span>
+      </form>
+    );
+  }
+});
 
 var RecoderForm = React.createClass({
 
@@ -235,10 +262,16 @@ var CommentForm = React.createClass({
 var Comment = React.createClass({
 
   render: function() {
+    var styles = {
+      line: "commentLineStyle",
+      twitter: "commentTwitterStyle",
+    };
+    var mainClassName = "comment " + styles[this.props.style];
+    
     //var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
         //<span className="text" dangerouslySetInnerHTML={{__html: rawMarkup}} />
     return (
-      <div className="comment commentLineStyle">
+      <div className={mainClassName}>
         <div className="inner">
           <div className="info">
             tape: <span className="tape">{this.props.tape_id}</span>
