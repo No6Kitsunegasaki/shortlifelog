@@ -29,6 +29,7 @@
 .commentListLineStyle {
   background: #6f92c0;
   padding: 10px;
+  width: 300px;
 }
 .commentLineStyle {
   .inner {
@@ -41,6 +42,7 @@
     padding: 10px;
 
     .info {
+      display: none;
       margin-bottom: 2px;
       font-size: 9pt;
     }
@@ -61,7 +63,82 @@
   }
   .right {
     background: #85e249 none repeat scroll 0 0;
-    margin-left: 100px;
+    display: table;
+    margin-left: auto;
+  }
+}
+
+.commentListTwitterStyle {
+  background-color: #f5f8fa;
+  padding: 10px;
+}
+.commentTwitterStyle {
+  .inner {
+    background-color: #fff;
+    border-bottom: 1px solid #e1e8ed;
+    font-size: 13pt;
+    padding: 10px;
+
+    .info {
+      color: #8899a6;
+      font-size: 13px;
+      margin-bottom: 2px;
+      .info-child {
+        margin-right: 10px;
+      }
+    }
+    .main {
+      font-size: 14px;
+      line-height: 18px;
+    }
+    .tape {
+    }
+    .postedTime {
+    }
+    .author {
+      color: #292f33;
+      font-weight: bold;
+    }
+    .text {
+    }
+  }
+}
+
+.commentListLifeLineStyle {
+  background-color: #f5f8fa;
+  padding: 10px;
+}
+.commentLifeLineStyle {
+  .inner {
+    background-color: #111;
+    border-bottom: 1px solid #01080d;
+    font-size: 13pt;
+    padding: 10px;
+
+    .info {
+      color: #8899a6;
+      font-size: 13px;
+      margin-bottom: 2px;
+      .info-child {
+        margin-right: 10px;
+      }
+    }
+    .main {
+      font-size: 14px;
+      line-height: 18px;
+    }
+    .tape {
+    }
+    .postedTime {
+    }
+    .author {
+    }
+    .text {
+      color: white;
+    }
+    .base {
+      color: green;
+    }
   }
 }
 

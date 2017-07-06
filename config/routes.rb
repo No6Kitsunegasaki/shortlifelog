@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get 'notes/write'
+  get 'notes/edit'
 
   namespace :api, format: 'json' do
     namespace :v1 do
